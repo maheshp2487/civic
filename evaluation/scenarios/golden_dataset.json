@@ -1,0 +1,32 @@
+[
+  {
+    "id": "scenario_1",
+    "description": "Maharashtra tenancy dispute",
+    "input": "My landlord refused to return my 30000 deposit in Pune",
+    "expected_category": "Housing & Real Estate",
+    "expected_jurisdiction_state": "Maharashtra",
+    "expected_evidence_status": "SUFFICIENT",
+    "should_clarify": false,
+    "expected_legal_aid_routing": ["Pune District Legal Services Authority", "Maharashtra State Legal Services Authority (MSLSA)"]
+  },
+  {
+    "id": "scenario_2",
+    "description": "Missing jurisdiction",
+    "input": "My landlord refused to return my deposit",
+    "expected_category": "Housing & Real Estate",
+    "expected_jurisdiction_state": null,
+    "expected_evidence_status": "INSUFFICIENT",
+    "should_clarify": true,
+    "expected_legal_aid_routing": []
+  },
+  {
+    "id": "scenario_3",
+    "description": "Delhi employment dispute with low income",
+    "input": "I am a poor factory worker in Delhi and haven't been paid for 3 months.",
+    "expected_category": "Employment & Labor",
+    "expected_jurisdiction_state": "Delhi",
+    "expected_evidence_status": "SUFFICIENT",
+    "should_clarify": false,
+    "expected_legal_aid_routing": ["Delhi State Legal Services Authority (DSLSA)"]
+  }
+]

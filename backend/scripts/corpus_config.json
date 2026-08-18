@@ -1,0 +1,16 @@
+{
+    "documents": [
+        {
+            "file_path": "d:/Projects/InnoAi/backend/scripts/sample_act.txt",
+            "metadata": {
+                "title": "Model Tenancy Act, 2021",
+                "type": "act",
+                "authority": "Ministry of Housing and Urban Affairs, Government of India",
+                "jurisdiction": {
+                    "country": "India"
+                },
+                "source_url": "https://mohua.gov.in/upload/uploadfiles/magazines/Model-Tenancy-Act.pdf"
+            }
+        }
+    ]
+}
