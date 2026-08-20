@@ -21,14 +21,12 @@ class OutputValidator:
             valid_actions = []
             for action in response.action_plan:
                 if action.basis_source_ids:
-                    # Strip out invalid IDs, keep action if at least one valid ID exists, or drop entirely
+                    # Strip out invalid IDs
                     valid_ids = [sid for sid in action.basis_source_ids if sid in valid_chunk_ids]
                     if valid_ids:
                         action.basis_source_ids = valid_ids
                         valid_actions.append(action)
-                else:
-                    # Action without explicit chunk citations is allowed but discouraged
-                    valid_actions.append(action)
+                # If an action has no valid citations, it is completely dropped to prevent hallucination.
             response.action_plan = valid_actions
             
         return response

@@ -106,6 +106,14 @@ class ChatWorkflow:
                 if len(augmented_chunks) > len(raw_chunks):
                     ranked_chunks = self.reranker.rerank(augmented_chunks, query.exact_keywords)
                     evidence_pack = EvidenceEvaluator.evaluate(situation, ranked_chunks)
+                    
+            # NO-ANSWER SAFETY GATE
+            if evidence_pack.sufficiency_state.value == "INSUFFICIENT":
+                return situation, evidence_pack, OutputResponse(
+                    situation_summary="I understand your situation, but I cannot establish sufficient verified legal evidence from authoritative sources to provide a confident answer.",
+                    clarification_questions=["Could you provide more specific details about the legal issue, jurisdiction, or any official documents you received so I can search further?"],
+                    verified_information=[], source_citations=[], evidence_checklist=[], action_plan=[]
+                ), None
         
         policy = ActionPolicyEngine.evaluate_policy(situation, evidence_pack)
         raw_response = self.generator.generate(situation, evidence_pack, policy)

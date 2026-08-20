@@ -5,7 +5,7 @@ from typing import List, Optional
 from app.schemas.contracts import OutputResponse, SourceCitation, EvidenceItem, ActionStep
 
 app = FastAPI(
-    title="InnoAi Legal Navigation API",
+    title="VidhiSetu Legal Navigation API",
     description="Backend API for the Constitutional Awareness and Legal Aid Chatbot",
     version="1.0.0",
 )
@@ -25,11 +25,22 @@ validate_config()
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "message": "InnoAi API is running"}
+    return {"status": "ok", "message": "VidhiSetu API is running"}
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Credentials": "true", "Access-Control-Allow-Methods": "*", "Access-Control-Allow-Headers": "*"}
+    )
 
 @app.get("/health/ready")
 def health_ready():

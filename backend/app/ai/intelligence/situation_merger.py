@@ -71,6 +71,7 @@ class SituationMerger:
                     situation.jurisdiction = Jurisdiction(country="India", state=new_jurisdiction)
                 else:
                     situation.jurisdiction.state = new_jurisdiction
+                    situation.jurisdiction.district = None
                 invalidate_evidence = True
                 
         if "amount" in vals and vals["amount"]:
@@ -106,14 +107,20 @@ class SituationMerger:
             fact = str(vals["additional_facts"]).strip()
             if fact not in situation.facts:
                 situation.facts.append(fact)
-                # New user facts usually don't invalidate the core evidence pack unless they contain entities, but to be safe:
                 invalidate_evidence = True
                 
-        if "missing_details" in vals and vals["missing_details"]:
-            fact = str(vals["missing_details"]).strip()
-            if fact not in situation.facts:
-                situation.facts.append(fact)
-                invalidate_evidence = True
+        # Handle dynamically generated questions
+        dynamic_keys = [k for k in vals.keys() if k.startswith("dynamic_q_")]
+        for dk in dynamic_keys:
+            ans = str(vals[dk]).strip()
+            if ans:
+                # Extract the question text from the ID (e.g. dynamic_q_0__What happened?)
+                parts = dk.split("__", 1)
+                question_text = parts[1] if len(parts) > 1 else "Additional Context"
+                fact = f"Answer to '{question_text}': {ans}"
+                if fact not in situation.facts:
+                    situation.facts.append(fact)
+                    invalidate_evidence = True
                 
         # Clear out the missing information because the user just submitted the form
         # The AI will figure out if something is still missing next time

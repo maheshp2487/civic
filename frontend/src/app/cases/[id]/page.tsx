@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { sendMessage, uploadDocument, submitIntake, CaseResponse } from "@/lib/api";
 import ConversationFeed from "@/components/ConversationFeed";
 import SituationPanel from "@/components/SituationPanel";
@@ -13,6 +13,7 @@ export interface ChatMessage {
 
 export default function CasePage() {
   const { id } = useParams();
+  const router = useRouter();
   const [data, setData] = useState<CaseResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -89,10 +90,14 @@ export default function CasePage() {
     // Convert structured values to a display string for the chat history
     const summary = Object.entries(values)
         .filter(([_, v]) => v && v.trim() !== "" && v.toLowerCase() !== "no" && v.toLowerCase() !== "none")
-        .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`)
-        .join(", ");
+        .map(([k, v]) => {
+          const field = data?.intake_form?.fields.find(f => f.id === k);
+          const label = field ? field.label.replace(' *', '') : k.split('__').pop()?.replace(/_/g, ' ') || k;
+          return `• ${label}\n  ↳ ${v}`;
+        })
+        .join("\n\n");
         
-    setMessages(prev => [...prev, { role: "user", content: `[Form Submitted] ${summary}` }]);
+    setMessages(prev => [...prev, { role: "user", content: `I have provided the additional details:\n${summary}` }]);
     
     try {
       const res = await submitIntake(id as string, values);
@@ -121,6 +126,7 @@ export default function CasePage() {
       setData(null);
       setMessages([]);
       setStatusText("");
+      router.push("/"); // Redirect to home
     } catch (err) {
       const e = err as Error;
       console.warn("Reset Failed:", e.message);
@@ -128,16 +134,39 @@ export default function CasePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#ededed] flex flex-col md:flex-row relative">
-      <button 
-        onClick={handleReset} 
-        className="absolute top-4 right-4 z-50 px-3 py-1 bg-neutral-900 border border-neutral-800 text-neutral-500 hover:text-white rounded text-xs opacity-50 hover:opacity-100 transition-opacity"
-      >
-        Demo Reset
-      </button>
+    <div className="flex-1 flex flex-col lg:flex-row w-full h-full overflow-hidden bg-page">
+      {/* 3-ZONE LAYOUT */}
 
-      {/* Left / Main: Conversation */}
-      <div className="w-full md:w-1/2 lg:w-5/12 flex flex-col border-b md:border-b-0 md:border-r border-neutral-800">
+      {/* LEFT ZONE: Case Sidebar (Hidden on mobile, small on desktop) */}
+      <aside className="hidden lg:flex flex-col w-64 border-r border-border-subtle bg-surface p-6 shrink-0 z-10">
+        <div className="mb-8">
+          <h2 className="text-sm font-bold tracking-wider text-text-muted uppercase">Case Workspace</h2>
+          <div className="mt-3">
+            <span 
+              className="inline-block text-xs font-medium text-text-secondary bg-surface-hover px-2.5 py-1.5 rounded-md border border-border-subtle truncate max-w-full"
+              title={data?.situation?.title || "New Case"}
+            >
+              {data?.situation?.title || "New Case"}
+            </span>
+          </div>
+        </div>
+        
+        <div className="mt-auto space-y-4">
+          <div className="p-4 bg-accent-primary-muted/20 border border-accent-primary-muted rounded-xl">
+            <h3 className="text-xs font-semibold text-accent-primary mb-1">Secure Session</h3>
+            <p className="text-xs text-text-secondary leading-relaxed">Your data is processed securely and is not stored permanently.</p>
+          </div>
+          <button 
+            onClick={handleReset} 
+            className="w-full px-4 py-2.5 bg-surface hover:bg-surface-hover border border-border-subtle text-status-error-text rounded-xl text-sm font-medium transition-colors shadow-sm"
+          >
+            End & Reset Case
+          </button>
+        </div>
+      </aside>
+
+      {/* CENTER ZONE: Conversation (Takes remaining space, prioritized) */}
+      <section className="flex-1 flex flex-col h-full bg-page relative min-w-0 lg:border-r border-border-subtle">
         <ConversationFeed 
           data={data} 
           loading={loading} 
@@ -148,15 +177,19 @@ export default function CasePage() {
           onFileUpload={handleFileUpload}
           onIntakeSubmit={handleIntakeSubmit}
         />
-      </div>
+      </section>
 
-      {/* Right: Situation and Pathway */}
-      <div className="w-full md:w-1/2 lg:w-7/12 flex flex-col overflow-y-auto">
-        <div className="p-6 md:p-10 space-y-12">
+      {/* RIGHT ZONE: Evidence & Action Plan (Stacks below chat on mobile, side panel on desktop) */}
+      <aside className="w-full lg:w-[26rem] xl:w-[30rem] bg-surface/50 shrink-0 overflow-y-auto overflow-x-hidden h-[50vh] lg:h-full border-t lg:border-t-0 border-border-subtle">
+        <div className="p-6 md:p-8 space-y-8">
+          <div className="lg:hidden flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-text-primary">Case Analysis</h2>
+            <button onClick={handleReset} className="text-xs font-medium text-status-error-text px-3 py-1.5 border border-status-error-border rounded-lg bg-surface">Reset</button>
+          </div>
           <SituationPanel data={data} />
           <PathwayPanel data={data} />
         </div>
-      </div>
+      </aside>
     </div>
   );
 }

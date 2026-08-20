@@ -1,4 +1,4 @@
-# InnoAi: Citizen-First Legal Navigation
+# VidhiSetu: Citizen-First Legal Navigation
 
 **One-line positioning:** An AI-powered legal navigation platform that structures disorganized citizen problems into verified, actionable legal pathways.
 
@@ -6,7 +6,7 @@
 Citizens facing legal issues rarely know the precise legal term for their problem. When seeking help, they provide disorganized facts, conflicting documents, and emotional narratives. Traditional legal chatbots attempt to answer these messy questions directly, resulting in generalized advice, hallucinations, and unverified claims that are dangerous in a legal context.
 
 ## 2. Solution
-**InnoAi** is a Citizen-First Legal Navigation platform. Instead of acting as an oracle chatbot, it acts as a structured intake pipeline. It extracts the situation, identifies missing critical facts (like jurisdiction), retrieves verifiable legal rules, cross-references user claims against uploaded documents, and generates a grounded action plan with routing to official free Legal Aid resources.
+**VidhiSetu** is a Citizen-First Legal Navigation platform. Instead of acting as an oracle chatbot, it acts as a structured intake pipeline. It extracts the situation, identifies missing critical facts (like jurisdiction), retrieves verifiable legal rules, cross-references user claims against uploaded documents, and generates a grounded action plan with routing to official free Legal Aid resources.
 
 ## 3. Why not ChatGPT?
 ChatGPT-style systems use a simple `Question → Answer` paradigm.

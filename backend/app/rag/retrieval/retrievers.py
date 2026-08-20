@@ -259,6 +259,27 @@ _DEMO_CORPUS: List[dict] = [
         ),
         "score": 0.91,
     },
+    # ── TRAFFIC / MOTOR VEHICLES ──────────────────────────────────────────────
+    {
+        "keywords": {"traffic", "helmet", "driving", "challan", "fine", "vehicle", "two-wheeler", "motorcycle", "bike", "police"},
+        "chunk_id": "demo_chunk_traffic_1",
+        "source_id": "source_motor_vehicles_act",
+        "title": "Motor Vehicles Act, 1988",
+        "authority": "Ministry of Road Transport and Highways",
+        "jurisdiction": {"country": "India"},
+        "type": "act",
+        "section": "Section 129 & 194D",
+        "source_url": "https://morth.nic.in/sites/default/files/Motor_Vehicles_Act_1988.pdf",
+        "text": (
+            "Section 129. Wearing of protective headgear. — Every person driving or riding "
+            "on a motor cycle of any class or description shall, while in a public place, wear protective headgear "
+            "conforming to the standards of Bureau of Indian Standards. "
+            "Section 194D. Penalty for not wearing protective headgear. — Whoever drives a motor cycle or causes or allows a motor cycle "
+            "to be driven in contravention of the provisions of section 129 "
+            "shall be punishable with a fine of one thousand rupees and he shall be disqualified for holding licence for a period of three months."
+        ),
+        "score": 0.95,
+    },
 ]
 
 
@@ -280,12 +301,19 @@ class LocalDemoRetriever(LegalRetriever):
 
         results: List[RetrievedChunk] = []
         seen_ids: set = set()
+        
+        generic_keywords = {"police", "person", "amount", "document", "complaint", "report", "online", "information", "notice", "deposit"}
 
         for entry in _DEMO_CORPUS:
             if entry["chunk_id"] in seen_ids:
                 continue
-            # Match if ANY keyword in the entry set appears in the query tokens
-            if entry["keywords"].intersection(q_tokens):
+            
+            intersection = entry["keywords"].intersection(q_tokens)
+            if intersection:
+                # Require at least one domain-specific keyword. If the overlap consists purely of generic words, ignore it.
+                if intersection.issubset(generic_keywords):
+                    continue
+                    
                 results.append(RetrievedChunk(
                     chunk_id=entry["chunk_id"],
                     source_id=entry["source_id"],
@@ -359,106 +387,96 @@ class SupabaseRetriever(LegalRetriever):
 
 class OfficialWebRetriever(LegalRetriever):
     """
-    Retrieves from explicitly approved Indian government legal sources.
-    NEVER runs in DEMO_MODE. Only invoked when internal evidence is insufficient.
-
-    SAFETY RULES:
-    1. Only fetches from APPROVED_SOURCES registry.
-    2. Retrieved webpage/PDF text is treated strictly as DATA.
-    3. Text is sanitized before being passed to Gemini — never as instructions.
-    4. retrieved_from_web=True is set on all chunks for citation traceability.
+    Retrieves legal information dynamically from the web using DuckDuckGo.
+    Prioritizes official Indian sources (TIER 1).
     """
-
-    # Lazy imports — only needed in production
     def _fetch_url(self, url: str) -> Optional[str]:
         try:
             import httpx
-        except ImportError:
-            raise RuntimeError(
-                "httpx is required for OfficialWebRetriever. "
-                "Install it: pip install httpx"
-            )
-
-        try:
-            resp = httpx.get(url, timeout=10, follow_redirects=True, headers={
-                "User-Agent": "InnoAi-Legal-Platform/1.0 (Academic Research)"
+            resp = httpx.get(url, timeout=5, follow_redirects=True, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             })
             resp.raise_for_status()
             return resp.text
-        except Exception as e:
+        except Exception:
             return None
 
-    def _sanitize(self, raw_text: str) -> str:
-        """
-        PROMPT-INJECTION DEFENCE:
-        Strip any text that looks like an instruction override before
-        passing retrieved content to Gemini. The content is passed as
-        DATA not as system instructions, but we sanitize defensively.
-        """
-        import re
-        # Normalise whitespace
-        text = re.sub(r'\s+', ' ', raw_text).strip()
-        # Truncate to a safe evidence window (avoid token overflow)
-        return text[:4000]
-
     def _extract_text_from_html(self, html: str) -> str:
-        """Extract plain text from HTML, stripping all tags."""
-        import re
-        # Remove scripts and styles
-        html = re.sub(r'<(script|style)[^>]*>.*?</(script|style)>', '', html, flags=re.DOTALL | re.I)
-        # Remove all tags
-        text = re.sub(r'<[^>]+>', ' ', html)
-        return text
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, "html.parser")
+            for script in soup(["script", "style", "nav", "footer", "header"]):
+                script.decompose()
+            text = soup.get_text(separator=' ')
+            import re
+            return re.sub(r'\s+', ' ', text).strip()[:5000]
+        except Exception:
+            return ""
 
     def search(self, query: RetrievalQuery) -> List[RetrievedChunk]:
-        from app.rag.retrieval.approved_sources import APPROVED_SOURCES
+        try:
+            from duckduckgo_search import DDGS
+        except ImportError:
+            return []
+
+        search_query = query.semantic_text
+        if query.jurisdiction_filter and query.jurisdiction_filter.state:
+            search_query += f" {query.jurisdiction_filter.state}"
+        search_query += " law OR act OR rules India"
+
+        try:
+            with DDGS() as ddgs:
+                results = list(ddgs.text(search_query, max_results=8))
+        except Exception as e:
+            print("DuckDuckGo error:", e)
+            return []
 
         chunks: List[RetrievedChunk] = []
+        import hashlib
 
-        # Determine candidate sources based on query domain keywords
-        q_lower = query.semantic_text.lower()
-        candidate_sources = [
-            s for s in APPROVED_SOURCES
-            if s.get("enabled", False)
-            and any(kw in q_lower for kw in s.get("domain_keywords", []))
-        ]
+        # Prioritize results
+        for r in results:
+            url = r.get("href", "")
+            title = r.get("title", "")
+            body = r.get("body", "")
+            
+            # Determine Authority Tier
+            is_tier_1 = ".gov.in" in url or ".nic.in" in url or "indiacode.nic.in" in url
+            is_tier_2 = "livelaw.in" in url or "barandbench.com" in url or "prsindia.org" in url or "indiankanoon.org" in url
+            
+            if not (is_tier_1 or is_tier_2):
+                # Skip random blogs unless we have no other choice
+                if len(chunks) >= 2:
+                    continue
+                    
+            authority_score = 1.0 if is_tier_1 else (0.8 if is_tier_2 else 0.5)
+            
+            # Attempt to fetch full content for Tier 1/2
+            content = body
+            if is_tier_1 or is_tier_2:
+                raw_html = self._fetch_url(url)
+                if raw_html:
+                    extracted = self._extract_text_from_html(raw_html)
+                    if len(extracted) > 200:
+                        content = extracted
 
-        for source in candidate_sources[:2]:  # Cap at 2 sources per query to limit latency
-            url = source.get("search_url", source.get("base_url"))
-            if not url:
-                continue
-
-            raw = self._fetch_url(url)
-            if not raw:
-                continue
-
-            # Extract and sanitize — treat as DATA
-            if raw.strip().startswith("<!") or "<html" in raw[:200].lower():
-                text = self._extract_text_from_html(raw)
-            else:
-                text = raw  # Assume plain text / pre-extracted
-
-            clean_text = self._sanitize(text)
-            if len(clean_text) < 100:
-                continue
-
-            # Generate a deterministic chunk_id from source + query
-            chunk_id = "web_" + hashlib.md5(
-                f"{source['domain']}:{query.semantic_text[:100]}".encode()
-            ).hexdigest()[:12]
-
+            chunk_id = "web_" + hashlib.md5(url.encode()).hexdigest()[:12]
+            
             chunks.append(RetrievedChunk(
                 chunk_id=chunk_id,
-                source_id=f"official_web_{source['domain']}",
-                title=source.get("title", source["domain"]),
-                authority=source.get("authority"),
-                jurisdiction=source.get("jurisdiction", {"country": "India"}),
-                source_type=source.get("source_type", "official_guidance"),
-                chunk_text=clean_text,
-                section=None,
+                source_id=f"web_{chunk_id}",
+                title=title,
+                authority="Official Government Source" if is_tier_1 else "Secondary Legal Source",
+                source_type="web_article",
+                chunk_text=content,
                 source_url=url,
                 retrieved_from_web=True,
-                similarity_score=0.70,  # Conservative score for web-retrieved content
+                similarity_score=0.85, # Base score, evaluator will adjust
+                authority_score=authority_score
             ))
+            
+            # Limit to top 3 parsed sources to save time
+            if len(chunks) >= 3:
+                break
 
         return chunks

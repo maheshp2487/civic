@@ -1,25 +1,146 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  /* LIGHT MODE */
+  --bg-page: #f8fafc; /* slate-50 */
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9; /* slate-100 */
+  --bg-elevated: #ffffff;
+  
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #475569; /* slate-600 */
+  --text-muted: #94a3b8; /* slate-400 */
+  --text-on-accent: #ffffff;
+  
+  --border-subtle: #e2e8f0; /* slate-200 */
+  --border-strong: #cbd5e1; /* slate-300 */
+  
+  --accent-primary: #4f46e5; /* indigo-600 */
+  --accent-primary-hover: #4338ca; /* indigo-700 */
+  --accent-primary-muted: #e0e7ff; /* indigo-100 */
+  
+  --status-error-bg: #fee2e2; /* red-100 */
+  --status-error-border: #fca5a5; /* red-300 */
+  --status-error-text: #991b1b; /* red-800 */
+  
+  --status-success-bg: #dcfce7; /* green-100 */
+  --status-success-text: #166534; /* green-800 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* DARK MODE fallback for SSR */
+    --bg-page: #0a0a0a;
+    --bg-surface: #171717;
+    --bg-surface-hover: #262626;
+    --bg-elevated: #1f1f1f;
+    
+    --text-primary: #f8fafc; /* slate-50 */
+    --text-secondary: #94a3b8; /* slate-400 */
+    --text-muted: #475569; /* slate-600 */
+    --text-on-accent: #ffffff;
+    
+    --border-subtle: #262626;
+    --border-strong: #404040;
+    
+    --accent-primary: #6366f1; /* indigo-500 */
+    --accent-primary-hover: #4f46e5; /* indigo-600 */
+    --accent-primary-muted: #3730a3; /* indigo-800 */
+    
+    --status-error-bg: #450a0a; /* red-950 */
+    --status-error-border: #7f1d1d; /* red-900 */
+    --status-error-text: #fca5a5; /* red-300 */
+    
+    --status-success-bg: #052e16; /* green-950 */
+    --status-success-text: #86efac; /* green-300 */
   }
 }
 
+/* For next-themes when class="light" is applied to html */
+html.light {
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-elevated: #ffffff;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-on-accent: #ffffff;
+  
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  
+  --accent-primary: #4f46e5;
+  --accent-primary-hover: #4338ca;
+  --accent-primary-muted: #e0e7ff;
+  
+  --status-error-bg: #fee2e2;
+  --status-error-border: #fca5a5;
+  --status-error-text: #991b1b;
+  
+  --status-success-bg: #dcfce7;
+  --status-success-text: #166534;
+}
+
+/* For next-themes when class="dark" is applied to html */
+html.dark {
+  --bg-page: #0a0a0a;
+  --bg-surface: #171717;
+  --bg-surface-hover: #262626;
+  --bg-elevated: #1f1f1f;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --text-on-accent: #ffffff;
+  
+  --border-subtle: #262626;
+  --border-strong: #404040;
+  
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-primary-muted: #1e1b4b; /* indigo-950 */
+  
+  --status-error-bg: #450a0a;
+  --status-error-border: #7f1d1d;
+  --status-error-text: #fca5a5;
+  
+  --status-success-bg: #052e16;
+  --status-success-text: #86efac;
+}
+
+@theme inline {
+  --color-page: var(--bg-page);
+  --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-surface-hover);
+  --color-elevated: var(--bg-elevated);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-accent: var(--text-on-accent);
+  
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-hover: var(--accent-primary-hover);
+  --color-accent-muted: var(--accent-primary-muted);
+  
+  --color-error-bg: var(--status-error-bg);
+  --color-error-border: var(--status-error-border);
+  --color-error-text: var(--status-error-text);
+  
+  --color-success-bg: var(--status-success-bg);
+  --color-success-text: var(--status-success-text);
+  
+  --font-sans: var(--font-inter);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
   font-family: var(--font-sans), sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

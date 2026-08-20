@@ -3,7 +3,7 @@
 ## The Core Principle
 "Rules determine. Evidence grounds. Gemini explains."
 
-InnoAi is explicitly designed not to trust the generative LLM with critical legal determinations. The pipeline is wrapped in deterministic gates to ensure citizen safety.
+VidhiSetu is explicitly designed not to trust the generative LLM with critical legal determinations. The pipeline is wrapped in deterministic gates to ensure citizen safety.
 
 ## Deterministic Controls
 1. **Evidence Sufficiency**: The RAG layer evaluates semantic distance. If distance exceeds a threshold, sufficiency drops to INSUFFICIENT.

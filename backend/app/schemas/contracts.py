@@ -3,8 +3,8 @@ from typing import List, Optional, Dict
 from enum import Enum
 class Jurisdiction(BaseModel):
     country: str = Field(default="India")
-    state: Optional[str] = None
-    district: Optional[str] = None
+    state: Optional[str] = Field(default=None, description="The specific state, ONLY if explicitly mentioned by the user. Otherwise null.")
+    district: Optional[str] = Field(default=None, description="The specific city or district, ONLY if explicitly mentioned by the user. Otherwise null.")
 
 class UrgencyIndicator(BaseModel):
     level: str = Field(default="Low", description="Low, Medium, High, Critical")
@@ -29,6 +29,7 @@ class Conflict(BaseModel):
     resolution_status: str = "Unresolved"
 
 class Situation(BaseModel):
+    title: str = Field(default="New Case", description="A short, 3-5 word title summarizing the user's core issue (e.g. 'Driving without helmet', 'Unpaid salary dispute').")
     category: str
     subcategory: str
     jurisdiction: Optional[Jurisdiction] = None

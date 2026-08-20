@@ -24,4 +24,5 @@ frontend/out/
 
 # OS
 .DS_Store
-Thumbs.dbbackend/e2e_artifacts/ 
+Thumbs.db
+backend/e2e_artifacts/ 
