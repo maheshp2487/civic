@@ -76,7 +76,7 @@ export interface CaseResponse {
   workflow_state: string;
 }
 
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+const API_BASE = "http://127.0.0.1:8001/api/v1";
 
 export async function sendMessage(caseId: string, content: string): Promise<CaseResponse> {
   const res = await fetch(`${API_BASE}/cases/${caseId}/messages`, {

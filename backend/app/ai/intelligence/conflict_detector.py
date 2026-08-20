@@ -5,38 +5,9 @@ class ConflictDetector:
     def merge_and_detect(old_sit: Situation, new_sit: Situation) -> Situation:
         conflicts = list(old_sit.conflicts)
         
-        if old_sit.jurisdiction and new_sit.jurisdiction:
-            if old_sit.jurisdiction.state and new_sit.jurisdiction.state:
-                if old_sit.jurisdiction.state != new_sit.jurisdiction.state:
-                    conflicts.append(Conflict(
-                        field="Jurisdiction",
-                        user_value=old_sit.jurisdiction.state,
-                        document_value=new_sit.jurisdiction.state,
-                        document_source="User Update",
-                        resolution_status="Unresolved"
-                    ))
-                    
-        if old_sit.amounts and new_sit.amounts:
-            for new_amt in new_sit.amounts:
-                if new_amt not in old_sit.amounts:
-                    conflicts.append(Conflict(
-                        field="Amount",
-                        user_value=", ".join(old_sit.amounts),
-                        document_value=new_amt,
-                        document_source="User Update",
-                        resolution_status="Unresolved"
-                    ))
-                    
-        if old_sit.dates and new_sit.dates:
-            for new_date in new_sit.dates:
-                if new_date not in old_sit.dates:
-                    conflicts.append(Conflict(
-                        field="Date",
-                        user_value=", ".join(old_sit.dates),
-                        document_value=new_date,
-                        document_source="User Update",
-                        resolution_status="Unresolved"
-                    ))
+        # We no longer trigger conflicts for 'User Update' since chat updates are 
+        # naturally additive or self-correcting. We only trigger conflicts for uploaded documents.
+
 
         merged_jurisdiction = new_sit.jurisdiction if new_sit.jurisdiction and new_sit.jurisdiction.state else old_sit.jurisdiction
         merged_facts = list(set(old_sit.facts + new_sit.facts))

@@ -72,7 +72,7 @@ class LegalAidResource(BaseModel):
     description: str
     official_url: str
     contact_info: str
-    jurisdiction: Optional[Dict[str, str]] = None
+    jurisdiction: Optional[Jurisdiction] = None
     source_url: str
     last_verified_at: str
 

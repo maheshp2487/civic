@@ -54,7 +54,7 @@ export default function CasePage() {
 
   const handleReset = async () => {
     try {
-      await fetch("http://127.0.0.1:8000/api/v1/cases/reset", { method: "POST" });
+      await fetch("http://127.0.0.1:8001/api/v1/cases/reset", { method: "POST" });
       setData(null);
       setStatusText("");
     } catch (e) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CaseResponse } from "@/lib/api";
 import { Send, Paperclip, AlertTriangle } from "lucide-react";
 
@@ -13,15 +13,27 @@ interface Props {
 
 export default function ConversationFeed({ data, loading, statusText, errorText, onSendMessage, onFileUpload }: Props) {
   const [input, setInput] = useState("");
+  const [userMessages, setUserMessages] = useState<string[]>([]);
+
+  // Clear messages on reset
+  useEffect(() => {
+    if (!data) {
+      setUserMessages([]);
+    }
+  }, [data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
+    setUserMessages(prev => [...prev, input]);
     onSendMessage(input);
     setInput("");
   };
 
   const unresolvedConflicts = data?.situation?.conflicts?.filter(c => c.resolution_status === "Unresolved") || [];
+  
+  // Show only the first clarification question to make it interactive step-by-step
+  const activeQuestion = data?.output?.clarification_questions?.[0];
 
   return (
     <div className="flex flex-col h-[50vh] md:h-screen">
@@ -48,11 +60,19 @@ export default function ConversationFeed({ data, loading, statusText, errorText,
           </div>
         )}
         
-        {data && data.output?.clarification_questions?.map((q, i) => (
-          <div key={i} className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-4 text-indigo-200 leading-relaxed">
-            {q}
+        {userMessages.map((msg, i) => (
+          <div key={i} className="flex justify-end">
+            <div className="bg-indigo-600 rounded-xl p-4 text-white max-w-[85%] leading-relaxed shadow-sm">
+              {msg}
+            </div>
           </div>
         ))}
+        
+        {activeQuestion && (
+          <div className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-4 text-indigo-200 leading-relaxed">
+            {activeQuestion}
+          </div>
+        )}
 
         {unresolvedConflicts.map((c, i) => (
           <div key={i} className="bg-amber-950/10 border border-amber-900/50 rounded-xl p-5 space-y-5">
