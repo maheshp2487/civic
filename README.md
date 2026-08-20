@@ -105,7 +105,9 @@ On the current curated evaluation dataset (3 core safety scenarios):
 - `/scripts`: Preflight validation tools.
 
 ## 15. Team
-- Mahesh (Lead Architect & Full Stack Engineer)
+- Mahesh
+- Harshini
+- Jeevika
 
 ## 16. License
 MIT License
