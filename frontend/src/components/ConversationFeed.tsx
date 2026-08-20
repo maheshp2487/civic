@@ -1,33 +1,54 @@
 import { useState, useEffect } from "react";
 import { CaseResponse } from "@/lib/api";
 import { Send, Paperclip, AlertTriangle } from "lucide-react";
+import { ChatMessage } from "@/app/cases/[id]/page";
 
 interface Props {
   data: CaseResponse | null;
   loading: boolean;
   statusText: string;
   errorText?: string;
+  messages: ChatMessage[];
   onSendMessage: (msg: string) => void;
   onFileUpload: (file: File) => void;
+  onIntakeSubmit: (values: Record<string, string>) => void;
 }
 
-export default function ConversationFeed({ data, loading, statusText, errorText, onSendMessage, onFileUpload }: Props) {
+export default function ConversationFeed({ data, loading, statusText, errorText, messages, onSendMessage, onFileUpload, onIntakeSubmit }: Props) {
   const [input, setInput] = useState("");
-  const [userMessages, setUserMessages] = useState<string[]>([]);
+  const [intakeValues, setIntakeValues] = useState<Record<string, string>>({});
 
-  // Clear messages on reset
+  // Reset intake form when new one arrives
   useEffect(() => {
-    if (!data) {
-      setUserMessages([]);
+    if (data?.workflow_state === "NEEDS_INTAKE" && data?.intake_form) {
+      setIntakeValues({});
     }
-  }, [data]);
+  }, [data?.intake_form]);
+
+  // Handle form submit
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
-    setUserMessages(prev => [...prev, input]);
     onSendMessage(input);
     setInput("");
+  };
+
+  const handleIntakeFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    
+    if (data?.intake_form) {
+      const missingFields = data.intake_form.fields.filter(
+        f => f.required && (!intakeValues[f.id] || !intakeValues[f.id].trim())
+      );
+      if (missingFields.length > 0) {
+        alert(`Please fill out all required fields. Missing: ${missingFields.map(f => f.label.replace(' *', '')).join(", ")}`);
+        return;
+      }
+    }
+    
+    onIntakeSubmit(intakeValues);
   };
 
   const unresolvedConflicts = data?.situation?.conflicts?.filter(c => c.resolution_status === "Unresolved") || [];
@@ -60,19 +81,18 @@ export default function ConversationFeed({ data, loading, statusText, errorText,
           </div>
         )}
         
-        {userMessages.map((msg, i) => (
-          <div key={i} className="flex justify-end">
-            <div className="bg-indigo-600 rounded-xl p-4 text-white max-w-[85%] leading-relaxed shadow-sm">
-              {msg}
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`${
+              msg.role === 'user' 
+                ? 'bg-indigo-600 text-white' 
+                : 'bg-indigo-950/20 border border-indigo-900/50 text-indigo-200'
+              } rounded-xl p-4 max-w-[85%] leading-relaxed shadow-sm`}
+            >
+              {msg.content}
             </div>
           </div>
         ))}
-        
-        {activeQuestion && (
-          <div className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-4 text-indigo-200 leading-relaxed">
-            {activeQuestion}
-          </div>
-        )}
 
         {unresolvedConflicts.map((c, i) => (
           <div key={i} className="bg-amber-950/10 border border-amber-900/50 rounded-xl p-5 space-y-5">
@@ -106,6 +126,71 @@ export default function ConversationFeed({ data, loading, statusText, errorText,
             </div>
           </div>
         ))}
+        
+        {data?.workflow_state === "NEEDS_INTAKE" && data.intake_form && (
+          <div className="bg-indigo-950/10 border border-indigo-900/50 rounded-xl p-5 shadow-sm mt-4">
+            <h3 className="text-indigo-400 font-semibold mb-4">{data.intake_form.title}</h3>
+            <form onSubmit={handleIntakeFormSubmit} className="space-y-4">
+              {data.intake_form.fields.map(f => (
+                <div key={f.id} className="flex flex-col">
+                  <label className="text-sm text-neutral-300 font-medium mb-1">{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+                  {f.type === "select" ? (
+                    <select 
+                      required={f.required}
+                      value={intakeValues[f.id] || ""}
+                      onChange={e => setIntakeValues({...intakeValues, [f.id]: e.target.value})}
+                      className="bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="">Select an option...</option>
+                      {f.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : f.type === "radio" || f.type === "checkbox" ? (
+                    <div className="flex flex-wrap gap-4 mt-1">
+                      {f.options?.map(o => (
+                        <label key={o} className="flex items-center gap-2 text-sm text-neutral-300 cursor-pointer">
+                          <input 
+                            type={f.type} 
+                            name={f.id} 
+                            value={o}
+                            checked={f.type === "checkbox" ? intakeValues[f.id]?.split(',').includes(o) : intakeValues[f.id] === o}
+                            onChange={(e) => {
+                              if (f.type === "checkbox") {
+                                const current = intakeValues[f.id] ? intakeValues[f.id].split(',') : [];
+                                if (e.target.checked) {
+                                  setIntakeValues({...intakeValues, [f.id]: [...current, o].join(',')});
+                                } else {
+                                  setIntakeValues({...intakeValues, [f.id]: current.filter(val => val !== o).join(',')});
+                                }
+                              } else {
+                                setIntakeValues({...intakeValues, [f.id]: o});
+                              }
+                            }}
+                            className="bg-neutral-900 border-neutral-700 text-indigo-500 rounded focus:ring-indigo-500"
+                          />
+                          {o}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <input 
+                      type={f.type}
+                      required={f.required}
+                      placeholder={f.placeholder}
+                      value={intakeValues[f.id] || ""}
+                      onChange={e => setIntakeValues({...intakeValues, [f.id]: e.target.value})}
+                      className="bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white focus:ring-1 focus:ring-indigo-500 placeholder-neutral-600"
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="pt-2">
+                <button type="submit" disabled={loading} className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors">
+                  Submit Details
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
 
       <div className="p-4 bg-[#0a0a0a] border-t border-neutral-800 shrink-0">

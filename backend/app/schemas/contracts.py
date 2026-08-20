@@ -76,13 +76,31 @@ class LegalAidResource(BaseModel):
     source_url: str
     last_verified_at: str
 
-class OutputResponse(BaseModel):
+class GeminiOutputResponse(BaseModel):
     situation_summary: str
     clarification_questions: List[str] = Field(default_factory=list)
     verified_information: List[str] = Field(default_factory=list)
     source_citations: List[SourceCitation] = Field(default_factory=list)
     evidence_checklist: List[EvidenceItem] = Field(default_factory=list)
     action_plan: List[ActionStep] = Field(default_factory=list)
+
+class OutputResponse(GeminiOutputResponse):
     legal_aid_resources: List[LegalAidResource] = Field(default_factory=list)
     legal_aid_status: LegalAidStatus = LegalAidStatus.NOT_RELEVANT
     disclaimer: str = "Legal information, not legal advice."
+
+class IntakeField(BaseModel):
+    id: str
+    label: str
+    type: str = Field(description="text, select, radio, checkbox, date, number")
+    options: List[str] = Field(default_factory=list)
+    required: bool = True
+    placeholder: Optional[str] = None
+
+class IntakeForm(BaseModel):
+    title: str = "Please provide a few more details"
+    fields: List[IntakeField] = Field(default_factory=list)
+
+class IntakeResponse(BaseModel):
+    values: Dict[str, str] = Field(default_factory=dict)
+

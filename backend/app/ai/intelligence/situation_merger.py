@@ -1,5 +1,5 @@
-from typing import List
-from app.schemas.contracts import Situation, DocumentClaim, Conflict
+from typing import List, Tuple, Dict
+from app.schemas.contracts import Situation, DocumentClaim, Conflict, Jurisdiction, IntakeResponse
 
 class SituationMerger:
     @staticmethod
@@ -53,3 +53,70 @@ class SituationMerger:
         situation.facts = list(set(situation.facts))
         
         return situation
+        
+    @staticmethod
+    def merge_intake(situation: Situation, intake: IntakeResponse) -> Tuple[Situation, bool]:
+        """
+        Merges an IntakeResponse directly into the Situation.
+        Returns a tuple: (Updated Situation, Requires Evidence Invalidation)
+        """
+        invalidate_evidence = False
+        vals = intake.values
+        
+        if "jurisdiction" in vals and vals["jurisdiction"]:
+            new_jurisdiction = vals["jurisdiction"].strip()
+            # If changed, invalidate
+            if not situation.jurisdiction or situation.jurisdiction.state != new_jurisdiction:
+                if not situation.jurisdiction:
+                    situation.jurisdiction = Jurisdiction(country="India", state=new_jurisdiction)
+                else:
+                    situation.jurisdiction.state = new_jurisdiction
+                invalidate_evidence = True
+                
+        if "amount" in vals and vals["amount"]:
+            amt = str(vals["amount"]).strip()
+            if amt not in situation.amounts:
+                situation.amounts.append(amt)
+                invalidate_evidence = True
+                
+        if "date" in vals and vals["date"]:
+            date_val = str(vals["date"]).strip()
+            if date_val not in situation.dates:
+                situation.dates.append(date_val)
+                # Dates may or may not be material depending on domain, but usually are
+                invalidate_evidence = True
+                
+        if "other_party" in vals and vals["other_party"]:
+            party = str(vals["other_party"]).strip()
+            if party not in situation.parties:
+                situation.parties.append(party)
+                # Adding a party usually doesn't invalidate generic laws, but might change local routing
+                invalidate_evidence = True
+                
+        # Merge evidence boolean fields as documents
+        evidence_keys = [k for k in vals.keys() if k.startswith("evidence_")]
+        for ek in evidence_keys:
+            ev_val = str(vals[ek]).strip()
+            if ev_val and ev_val.lower() != "no" and ev_val.lower() != "none":
+                # Only add if it's new
+                if ev_val not in situation.documents_mentioned:
+                    situation.documents_mentioned.append(ev_val)
+                
+        if "additional_facts" in vals and vals["additional_facts"]:
+            fact = str(vals["additional_facts"]).strip()
+            if fact not in situation.facts:
+                situation.facts.append(fact)
+                # New user facts usually don't invalidate the core evidence pack unless they contain entities, but to be safe:
+                invalidate_evidence = True
+                
+        if "missing_details" in vals and vals["missing_details"]:
+            fact = str(vals["missing_details"]).strip()
+            if fact not in situation.facts:
+                situation.facts.append(fact)
+                invalidate_evidence = True
+                
+        # Clear out the missing information because the user just submitted the form
+        # The AI will figure out if something is still missing next time
+        situation.missing_information = []
+        
+        return situation, invalidate_evidence

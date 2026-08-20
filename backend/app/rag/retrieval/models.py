@@ -24,11 +24,14 @@ class RetrievedChunk(BaseModel):
     source_type: Optional[str] = None
     chunk_text: str
     section: Optional[str] = None
+    source_url: Optional[str] = None          # Official source link for citations
+    retrieved_from_web: bool = False           # True only for OfficialWebRetriever chunks
     similarity_score: float
     keyword_score: float = 0.0
     authority_score: float = 0.0
     freshness_score: float = 0.0
     final_score: float = 0.0
+
 
 class EvidencePack(BaseModel):
     chunks: List[RetrievedChunk]

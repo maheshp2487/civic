@@ -5,6 +5,10 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_key: str = ""
     gemini_api_key: str = ""
+    gemini_api_key_backup: str = ""
+    generation_model: str = "gemini-3.6-flash"
+    situation_model: str = "gemini-3.6-flash"
+    document_model: str = "gemini-3.6-flash"
     gemini_embedding_model: str = "gemini-embedding-2"
     gemini_embedding_dimensions: int = 768
     

@@ -20,7 +20,7 @@ class DocumentExtractionResult(BaseModel):
 class MultimodalDocumentParser:
     def __init__(self):
         self.api_key = settings.gemini_api_key or "DUMMY_KEY"
-        self.model = "gemini-3.6-flash"
+        self.model = settings.document_model
 
     def parse_pdf_text(self, file_bytes: bytes, document_id: str) -> List[DocumentClaim]:
         try:
@@ -60,7 +60,8 @@ class MultimodalDocumentParser:
             ]
             
         try:
-            response = client.models.generate_content(
+            from app.core.llm_client import generate_content_with_fallback
+            response = generate_content_with_fallback(
                 model=self.model,
                 contents=parts,
                 config=genai.types.GenerateContentConfig(
@@ -80,5 +81,9 @@ class MultimodalDocumentParser:
                 claim.document_id = document_id
                 
             return result.claims
+            
         except Exception as e:
+            from app.core.exceptions import QuotaExhaustedError
+            if isinstance(e, QuotaExhaustedError):
+                raise
             raise RuntimeError(f"Document extraction failed: {str(e)}")

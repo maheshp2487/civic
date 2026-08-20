@@ -69,11 +69,26 @@ export interface OutputResponse {
   disclaimer: string;
 }
 
+export interface IntakeField {
+  id: string;
+  label: string;
+  type: string;
+  options?: string[];
+  required: boolean;
+  placeholder?: string;
+}
+
+export interface IntakeForm {
+  title: string;
+  fields: IntakeField[];
+}
+
 export interface CaseResponse {
   case_id: string;
   situation: Situation;
   output?: OutputResponse;
   workflow_state: string;
+  intake_form?: IntakeForm;
 }
 
 const API_BASE = "http://127.0.0.1:8001/api/v1";
@@ -84,7 +99,10 @@ export async function sendMessage(caseId: string, content: string): Promise<Case
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
   });
-  if (!res.ok) throw new Error("Failed to send message");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to send message");
+  }
   return res.json();
 }
 
@@ -98,6 +116,19 @@ export async function uploadDocument(caseId: string, file: File): Promise<CaseRe
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`Failed to upload document: ${errorText}`);
+  }
+  return res.json();
+}
+
+export async function submitIntake(caseId: string, values: Record<string, string>): Promise<CaseResponse> {
+  const res = await fetch(`${API_BASE}/cases/${caseId}/intake`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ values }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to submit intake");
   }
   return res.json();
 }

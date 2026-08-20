@@ -1,37 +1,64 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { sendMessage, uploadDocument, CaseResponse } from "@/lib/api";
+import { sendMessage, uploadDocument, submitIntake, CaseResponse } from "@/lib/api";
 import ConversationFeed from "@/components/ConversationFeed";
 import SituationPanel from "@/components/SituationPanel";
 import PathwayPanel from "@/components/PathwayPanel";
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export default function CasePage() {
   const { id } = useParams();
   const [data, setData] = useState<CaseResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const hasInitialized = useRef(false);
   
   useEffect(() => {
+    if (hasInitialized.current) return;
     const initialMessage = sessionStorage.getItem("initial_message");
     if (initialMessage) {
       sessionStorage.removeItem("initial_message");
-      handleSendMessage(initialMessage);
+      hasInitialized.current = true;
+      handleSendMessage(initialMessage, true);
     }
   }, []);
 
   const [errorText, setErrorText] = useState("");
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, isInitial = false) => {
+    if (loading) return; // Prevent duplicate concurrent requests
     setLoading(true);
     setStatusText("Understanding your situation...");
     setErrorText("");
+    
+    setMessages(prev => [...prev, { role: "user", content }]);
+    
     try {
       const res = await sendMessage(id as string, content);
       setData(res);
-    } catch (e) {
-      console.error(e);
-      setErrorText("Error communicating with server. Please try again.");
+      
+      let assistantReply = "";
+      if (res.output?.clarification_questions?.length) {
+        assistantReply = res.output.clarification_questions[0];
+      } else if (res.output?.situation_summary && isInitial) {
+        assistantReply = res.output.situation_summary;
+      } else if (res.output?.action_plan?.length) {
+        assistantReply = "I have analyzed your situation and prepared a legal pathway. Please review it on the right panel.";
+      }
+
+      if (assistantReply) {
+        setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
+      }
+    } catch (err) {
+      const e = err as Error;
+      console.warn("API Request Failed:", e.message);
+      setErrorText(e.message || "Error communicating with server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -44,9 +71,45 @@ export default function CasePage() {
     try {
       const res = await uploadDocument(id as string, file);
       setData(res);
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      const e = err as Error;
+      console.warn("Document Upload Failed:", e.message);
       setErrorText("Error processing document. Please check the file and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleIntakeSubmit = async (values: Record<string, string>) => {
+    if (loading) return;
+    setLoading(true);
+    setStatusText("Processing your details...");
+    setErrorText("");
+    
+    // Convert structured values to a display string for the chat history
+    const summary = Object.entries(values)
+        .filter(([_, v]) => v && v.trim() !== "" && v.toLowerCase() !== "no" && v.toLowerCase() !== "none")
+        .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`)
+        .join(", ");
+        
+    setMessages(prev => [...prev, { role: "user", content: `[Form Submitted] ${summary}` }]);
+    
+    try {
+      const res = await submitIntake(id as string, values);
+      setData(res);
+      
+      let assistantReply = "";
+      if (res.output?.action_plan?.length) {
+        assistantReply = "I have analyzed your complete situation and prepared a legal pathway. Please review it on the right panel.";
+      }
+
+      if (assistantReply) {
+        setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
+      }
+    } catch (err) {
+      const e = err as Error;
+      console.warn("Intake Submit Failed:", e.message);
+      setErrorText(e.message || "Error submitting form. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -56,9 +119,11 @@ export default function CasePage() {
     try {
       await fetch("http://127.0.0.1:8001/api/v1/cases/reset", { method: "POST" });
       setData(null);
+      setMessages([]);
       setStatusText("");
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      const e = err as Error;
+      console.warn("Reset Failed:", e.message);
     }
   };
 
@@ -78,8 +143,10 @@ export default function CasePage() {
           loading={loading} 
           statusText={statusText}
           errorText={errorText}
+          messages={messages}
           onSendMessage={handleSendMessage}
           onFileUpload={handleFileUpload}
+          onIntakeSubmit={handleIntakeSubmit}
         />
       </div>
 
