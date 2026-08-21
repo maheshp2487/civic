@@ -1,9 +1,14 @@
 # Environment secrets — NEVER commit these
-backend/.env
 .env
-*.env
-.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+
+# Always allow example files
 !.env.example
+!**/.env.example
 
 # Python
 __pycache__/

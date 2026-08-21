@@ -1,12 +1,8 @@
 "use client";
-
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+// ThemeProvider is no longer needed — the design is a fixed light/warm palette
+// with a dark sidebar embedded in the case workspace.
 import * as React from "react";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
-    </NextThemesProvider>
-  );
+  return <>{children}</>;
 }

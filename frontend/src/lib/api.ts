@@ -13,6 +13,7 @@ export interface Jurisdiction {
 }
 
 export interface Situation {
+  title: string;
   category: string;
   subcategory: string;
   jurisdiction?: Jurisdiction;
@@ -23,6 +24,7 @@ export interface Situation {
   documents_mentioned: string[];
   missing_information: string[];
   conflicts: Conflict[];
+  uncertainty: string[];
 }
 
 export interface SourceCitation {

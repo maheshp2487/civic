@@ -1,113 +1,58 @@
 @import "tailwindcss";
 
 :root {
-  /* LIGHT MODE */
-  --bg-page: #f8fafc; /* slate-50 */
-  --bg-surface: #ffffff;
-  --bg-surface-hover: #f1f5f9; /* slate-100 */
-  --bg-elevated: #ffffff;
-  
-  --text-primary: #0f172a; /* slate-900 */
-  --text-secondary: #475569; /* slate-600 */
-  --text-muted: #94a3b8; /* slate-400 */
-  --text-on-accent: #ffffff;
-  
-  --border-subtle: #e2e8f0; /* slate-200 */
-  --border-strong: #cbd5e1; /* slate-300 */
-  
-  --accent-primary: #4f46e5; /* indigo-600 */
-  --accent-primary-hover: #4338ca; /* indigo-700 */
-  --accent-primary-muted: #e0e7ff; /* indigo-100 */
-  
-  --status-error-bg: #fee2e2; /* red-100 */
-  --status-error-border: #fca5a5; /* red-300 */
-  --status-error-text: #991b1b; /* red-800 */
-  
-  --status-success-bg: #dcfce7; /* green-100 */
-  --status-success-text: #166534; /* green-800 */
-}
+  /* VidhiSetu Design Token System — Light/Warm Palette */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* DARK MODE fallback for SSR */
-    --bg-page: #0a0a0a;
-    --bg-surface: #171717;
-    --bg-surface-hover: #262626;
-    --bg-elevated: #1f1f1f;
-    
-    --text-primary: #f8fafc; /* slate-50 */
-    --text-secondary: #94a3b8; /* slate-400 */
-    --text-muted: #475569; /* slate-600 */
-    --text-on-accent: #ffffff;
-    
-    --border-subtle: #262626;
-    --border-strong: #404040;
-    
-    --accent-primary: #6366f1; /* indigo-500 */
-    --accent-primary-hover: #4f46e5; /* indigo-600 */
-    --accent-primary-muted: #3730a3; /* indigo-800 */
-    
-    --status-error-bg: #450a0a; /* red-950 */
-    --status-error-border: #7f1d1d; /* red-900 */
-    --status-error-text: #fca5a5; /* red-300 */
-    
-    --status-success-bg: #052e16; /* green-950 */
-    --status-success-text: #86efac; /* green-300 */
-  }
-}
-
-/* For next-themes when class="light" is applied to html */
-html.light {
-  --bg-page: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-surface-hover: #f1f5f9;
+  /* Page & Surface */
+  --bg-page: #f0ece4;         /* warm cream — landing page background */
+  --bg-surface: #ffffff;       /* pure white — cards, panels */
+  --bg-surface-hover: #f5f3ef; /* subtle hover state */
   --bg-elevated: #ffffff;
-  
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+
+  /* Sidebar (always dark) */
+  --bg-sidebar: #191c27;       /* deep navy/charcoal */
+  --bg-sidebar-hover: #252838;
+  --bg-sidebar-active: #2e3247;
+  --bg-sidebar-btn: #252838;
+
+  /* Text */
+  --text-primary: #111827;     /* near-black */
+  --text-secondary: #6b7280;   /* grey */
+  --text-muted: #9ca3af;       /* lighter grey */
+  --text-on-dark: #e5e7eb;     /* light text on dark sidebar */
+  --text-on-dark-muted: #6b7280;
   --text-on-accent: #ffffff;
-  
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
-  
-  --accent-primary: #4f46e5;
-  --accent-primary-hover: #4338ca;
-  --accent-primary-muted: #e0e7ff;
-  
-  --status-error-bg: #fee2e2;
+
+  /* Borders */
+  --border-subtle: #e5e0d8;    /* warm off-white borders */
+  --border-strong: #d1cdc4;
+  --border-sidebar: #2e3247;
+
+  /* Accent — Gold (links, dividers, highlights) */
+  --accent-gold: #b8952a;
+  --accent-gold-light: #f5f0e0;
+
+  /* Primary CTA — dark/near-black */
+  --accent-primary: #111827;
+  --accent-primary-hover: #1f2937;
+  --accent-primary-muted: #e5e7eb;
+
+  /* Status */
+  --status-error-bg: #fef2f2;
   --status-error-border: #fca5a5;
   --status-error-text: #991b1b;
-  
-  --status-success-bg: #dcfce7;
-  --status-success-text: #166534;
-}
 
-/* For next-themes when class="dark" is applied to html */
-html.dark {
-  --bg-page: #0a0a0a;
-  --bg-surface: #171717;
-  --bg-surface-hover: #262626;
-  --bg-elevated: #1f1f1f;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --text-on-accent: #ffffff;
-  
-  --border-subtle: #262626;
-  --border-strong: #404040;
-  
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #4f46e5;
-  --accent-primary-muted: #1e1b4b; /* indigo-950 */
-  
-  --status-error-bg: #450a0a;
-  --status-error-border: #7f1d1d;
-  --status-error-text: #fca5a5;
-  
-  --status-success-bg: #052e16;
-  --status-success-text: #86efac;
+  --status-success-bg: #f0fdf4;
+  --status-success-text: #166534;
+
+  /* Chat bubbles */
+  --bubble-user-bg: #e8e5df;
+  --bubble-user-text: #111827;
+  --bubble-ai-text: #374151;
+
+  /* Right panel */
+  --panel-understanding-bg: #1f2330;
+  --panel-understanding-text: #e5e7eb;
 }
 
 @theme inline {
@@ -115,32 +60,69 @@ html.dark {
   --color-surface: var(--bg-surface);
   --color-surface-hover: var(--bg-surface-hover);
   --color-elevated: var(--bg-elevated);
-  
+
+  --color-sidebar: var(--bg-sidebar);
+  --color-sidebar-hover: var(--bg-sidebar-hover);
+  --color-sidebar-active: var(--bg-sidebar-active);
+  --color-sidebar-btn: var(--bg-sidebar-btn);
+
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-on-dark: var(--text-on-dark);
+  --color-text-on-dark-muted: var(--text-on-dark-muted);
   --color-text-on-accent: var(--text-on-accent);
-  
+
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
-  
+  --color-border-sidebar: var(--border-sidebar);
+
+  --color-gold: var(--accent-gold);
+  --color-gold-light: var(--accent-gold-light);
+
   --color-accent-primary: var(--accent-primary);
   --color-accent-hover: var(--accent-primary-hover);
   --color-accent-muted: var(--accent-primary-muted);
-  
+
   --color-error-bg: var(--status-error-bg);
   --color-error-border: var(--status-error-border);
   --color-error-text: var(--status-error-text);
-  
+
   --color-success-bg: var(--status-success-bg);
   --color-success-text: var(--status-success-text);
-  
+
+  --color-bubble-user: var(--bubble-user-bg);
+  --color-bubble-user-text: var(--bubble-user-text);
+  --color-bubble-ai-text: var(--bubble-ai-text);
+
+  --color-panel-dark: var(--panel-understanding-bg);
+  --color-panel-dark-text: var(--panel-understanding-text);
+
   --font-sans: var(--font-inter);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   background-color: var(--bg-page);
   color: var(--text-primary);
   font-family: var(--font-sans), sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
